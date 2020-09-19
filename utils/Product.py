@@ -1,10 +1,11 @@
 class Product:
     def __init__(self, object):
+        # Values from Migros db
         # TODO: self.gtin = object['gtin']
-        self.name = object['artikel']  # Origin country from Migros logistics db
-        self.origin = object['herkunft']  # Origin country from Migros logistics db
-        self.quantity = object['quantity']  # TODO
-        self.unit = object['unit']  # units of measure
+        self.name = object['artikel']  # article name
+        self.origin = object['herkunft']  # origin country
+        self.quantity = object['quantity']  # quantity given in units
+        self.unit = object['unit']  # units of measure ('m3' or 'kg')
 
         # Values provided by the Eaternity API
         self.__eat_rating = None  # The rating (label)
