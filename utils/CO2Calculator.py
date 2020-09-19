@@ -11,7 +11,6 @@ class CO2Calculator(object):
         # distance in km
         # weight in kg
         # means of trsp in ('car', 'cruise', 'flight')
-        emission = 0
         factor = cls.get_emission_factor(means_of_trsp, distance)
         emission = factor * distance * weight
         return emission*cls.GRAMS_TO_KILOGRAMS
