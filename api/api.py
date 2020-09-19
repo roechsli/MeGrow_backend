@@ -2,12 +2,12 @@ from flask import Flask
 import requests
 from requests.auth import HTTPBasicAuth
 
-EATERNITY_KEY = "SwRbyFIaQWtvjhKNl1xugM4UTBVEqpGm"
-EATERNITY_AUTH = HTTPBasicAuth(EATERNITY_KEY, "")
-EATERNITY_BASE_URL = "https://co2.eaternity.ch"
+EAT_KEY = "SwRbyFIaQWtvjhKNl1xugM4UTBVEqpGm"
+EAT_AUTH = HTTPBasicAuth(EAT_KEY, "")
+EAT_BASE_URL = "https://co2.eaternity.ch"
 
-MIGROS_AUTH = HTTPBasicAuth("hackzurich2020", "uhSyJ08KexKn4ZFS")
-MIGROS_BASE_URL = "https://hackzurich-api.migros.ch"
+MIG_AUTH = HTTPBasicAuth("hackzurich2020", "uhSyJ08KexKn4ZFS")
+MIG_BASE_URL = "https://hackzurich-api.migros.ch"
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -18,23 +18,56 @@ def home():
 
 @app.route('/products/<int:product_id>')
 def get_product(product_id):
-    murl = f"{MIGROS_BASE_URL}/products/{product_id}"
-    r = requests.get(murl, auth=MIGROS_AUTH)
+    murl = f"{MIG_BASE_URL}/products/{product_id}"
+    r = requests.get(murl, auth=MIG_AUTH)
     if r.status_code not in [200, 201, 202]:
-        print(f"ERROR: Failed GETting product {product_id} with status {r.status_code}: '{r.text}'")
+        print(f"M ERROR: Failed GETting product {product_id} with status {r.status_code}: '{r.text}'")
     else:
-        print(f"SUCCESS: GET product {product_id}")
-        return r.json()
+       print(f"M SUCCESS: GET product {product_id}")
+        #return r.json()
 
-    url = f"{EATERNITY_BASE_URL}/api/products/{product_id}"
-    response = requests.get(url, auth=EATERNITY_AUTH)
+    # extract information
+#    mig_json = r.json()
+#    prod_id = product_id
+#    prod_name = mig_json['name']
+#    prod_gtin = mig_json['gtins'][0]
+
+    # if has category code:BeSS_010115, its a frozen product
+
+#    prod_nam  "names": [
+#    {
+#      "language": "de",
+#      "value": "Karottenpuree"
+#    }
+#  ],
+#  "amount": 20,
+#  "unit": "gram",
+#  "producer": "hipp",
+#  "ingredients-declaration": "Karotten, Tomaten",
+#  "nutrient-values": #{
+#    "energy-kcal": 200,
+#    "fat-gram": 12.3,
+#    "saturated-fat-gram": 2.5,
+#    "carbohydrates-gram": 8.4,
+#    "sucrose-gram": 3.2,
+#    "protein-gram": 2.2,
+#    "sodium-chloride-gram": 0.3
+#  },
+#  "origin": "paris, frankreich",
+#  "transport": "ground",
+#  "production": "standard",
+#  "processing": "raw",
+#  "conservation": "fresh",
+#  "packaging": "none"
+#}
+
+    url = f"{EAT_BASE_URL}/api/products/{product_id}"
+    print(url)
+    response = requests.get(url, auth=EAT_AUTH)
     if response.status_code not in [200, 201, 202]:
-        return f"ERROR: Failed GETting product {product_id} with status {response.status_code}: '{response.text}'"
+        print(f"E ERROR: Failed GETting product {product_id} with status {response.status_code}: '{response.text}'")
     else:
-        print(f"SUCCESS: GET product {product_id}")
-        return response.json()
+        print(f"E SUCCESS: GET product {product_id}")
+        #return response.json()
 
-@app.route('/post/<int:post_id>')
-def show_post(post_id):
-    # show the post with the given id, the id is an integer
-    return 'Post %d' % post_id
+    return r.json() + response.json()
