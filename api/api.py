@@ -2,7 +2,7 @@ from flask import Flask
 import requests
 from requests.auth import HTTPBasicAuth
 
-EAT_KEY = "SwRbyFIaQWtvjhKNl1xugM4UTBVEqpGm"
+EAT_KEY = "SR011ZC1hWbkge6LmrEnUO2l0tz4TM5X"
 EAT_AUTH = HTTPBasicAuth(EAT_KEY, "")
 EAT_BASE_URL = "https://co2.eaternity.ch"
 
@@ -18,56 +18,82 @@ def home():
 
 @app.route('/products/<int:product_id>')
 def get_product(product_id):
+    # MIGROS FETCH
     murl = f"{MIG_BASE_URL}/products/{product_id}"
     r = requests.get(murl, auth=MIG_AUTH)
     if r.status_code not in [200, 201, 202]:
-        print(f"M ERROR: Failed GETting product {product_id} with status {r.status_code}: '{r.text}'")
+        print(f"MIG ERROR: Failed GETting product {product_id} with status {r.status_code}: '{r.text}'")
     else:
-       print(f"M SUCCESS: GET product {product_id}")
+        # success
         #return r.json()
 
-    # extract information
-#    mig_json = r.json()
-#    prod_id = product_id
-#    prod_name = mig_json['name']
-#    prod_gtin = mig_json['gtins'][0]
-
-    # if has category code:BeSS_010115, its a frozen product
-
-#    prod_nam  "names": [
-#    {
-#      "language": "de",
-#      "value": "Karottenpuree"
-#    }
-#  ],
-#  "amount": 20,
-#  "unit": "gram",
-#  "producer": "hipp",
-#  "ingredients-declaration": "Karotten, Tomaten",
-#  "nutrient-values": #{
-#    "energy-kcal": 200,
-#    "fat-gram": 12.3,
-#    "saturated-fat-gram": 2.5,
-#    "carbohydrates-gram": 8.4,
-#    "sucrose-gram": 3.2,
-#    "protein-gram": 2.2,
-#    "sodium-chloride-gram": 0.3
-#  },
-#  "origin": "paris, frankreich",
-#  "transport": "ground",
-#  "production": "standard",
-#  "processing": "raw",
-#  "conservation": "fresh",
-#  "packaging": "none"
-#}
-
+    # EATERNITY FETCH
     url = f"{EAT_BASE_URL}/api/products/{product_id}"
-    print(url)
     response = requests.get(url, auth=EAT_AUTH)
-    if response.status_code not in [200, 201, 202]:
-        print(f"E ERROR: Failed GETting product {product_id} with status {response.status_code}: '{response.text}'")
-    else:
-        print(f"E SUCCESS: GET product {product_id}")
-        #return response.json()
+    if response.status_code == 400:
+        # product not found, add it to eaternityDB
+        put_product(r.json())
+    elif response.status_code == 601:
+        # product not ready yet
 
-    return r.json() + response.json()
+    elif response.status_code not in [200, 201, 202]:
+        # error
+        print(f"EAT ERROR: Failed GETting product {product_id} with status {response.status_code}: '{response.text}'")
+    else:
+        # success
+        eat_json = response.json()
+        eat_co2value = eat_json['co2-value']
+        eat_rating = eat_json['rating']
+        
+
+def put_product(mig_json):
+    # extract information
+    mig_json = r.json()
+    prod_id = mig_json['gtins']['id']
+    prod_name = mig_json['name']
+    prod_gtin = mig_json['gtins'][0]
+    prod_name = mig_json['name']
+    prod_amount = mig_json['package']['net_weight']
+    prod_unit = mig_json['package']['net_weight_unit']
+    prod_origin = mig_json['origins']['producing_country']
+    prod_ingred = mig_json['ingredients']
+
+    body = {
+      "id": prod_id,
+      "gtin": prod_gtin,
+      "names": [
+        {
+          "language": "de",
+          "value": prod_name
+        }
+      ],
+      "amount": prod_amount,
+      "unit": prod_unit,
+      "producer": "hipp",
+      "ingredients-declaration": prod_ingred,
+      "nutrient-values": {
+        "energy-kcal": parse_nutrientval(mig_json['nutrients'], "PIM_NUT_ENERGIE"),
+        "fat-gram": parse_nutrientval(mig_json['nutrients'], "PIM_NUT_GES_FETT"),
+        "saturated-fat-gram": parse_nutrientval(mig_json['nutrients'], "PIM_NUT_GESFETTS"),
+        "carbohydrates-gram": parse_nutrientval(mig_json['nutrients'], "PIM_NUT_GES_KOHL"),
+        "sucrose-gram": parse_nutrientval(mig_json['nutrients'], "PIM_NUT_GES_ZUCK")
+      },
+      "origin": prod_origin
+#      "transport": "ground",
+#      "production": "standard",
+#      "processing": "raw",
+#      "conservation": "fresh",
+#      "packaging": "none"
+    }
+
+    url = f"{EAT_BASE_URL}/api/products/{prod_id}"
+    r = requests.put(url, json=body, auth=EAT_AUTH)
+    if r.status_code not in [200, 201, 202]:
+        # error
+        print(f"ERROR: Failed PUTting product {product_id} with status {response.status_code}: '{response.text}'")
+    else:
+        # success
+
+def parse_nutrientval(json_object, code):
+    return [obj for obj in json_object if obj['code']==code][0]['quantity']
+
