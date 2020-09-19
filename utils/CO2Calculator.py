@@ -3,7 +3,8 @@ class CO2Calculator(object):
     #   - car
     #   - cruise
     #   - flight
-    #   returns: emission (grams of CO2)
+    #   returns: emission (kilograms of CO2)
+    GRAMS_TO_KILOGRAMS = 1000
 
     @classmethod
     def calculate_co2_emission(cls, distance, weight, means_of_trsp):
@@ -13,11 +14,11 @@ class CO2Calculator(object):
         emission = 0
         factor = cls.get_emission_factor(means_of_trsp, distance)
         emission = factor * distance * weight
-        return emission
+        return emission*cls.GRAMS_TO_KILOGRAMS
 
     @classmethod
     def get_emission_factor(cls, means, distance):
-        # returns factor: grams/kg/km
+        # returns factor: kg[CO2]/kg/km
         factor = 0
         factor_map = {
             'car': 0.080,
