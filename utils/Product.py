@@ -3,6 +3,8 @@ class Product:
         # TODO: self.gtin = object['gtin']
         self.name = object['artikel']  # Origin country from Migros logistics db
         self.origin = object['herkunft']  # Origin country from Migros logistics db
+        self.quantity = object['quantity']  # TODO
+        self.unit = object['unit']  # units of measure
 
         # Values provided by the Eaternity API
         self.__eat_rating = None  # The rating (label)
@@ -13,6 +15,12 @@ class Product:
 
     def get_name(self):
         return self.name
+
+    def get_quantity(self):
+        return self.quantity
+
+    def get_unit(self):
+        return self.unit
 
     def set_eat_rating(self, eat_rating):
         self.__eat_rating = eat_rating
