@@ -2,12 +2,31 @@ from flask import Flask
 import requests
 from requests.auth import HTTPBasicAuth
 
+import CO2Calculator
+
 EAT_KEY = "SR011ZC1hWbkge6LmrEnUO2l0tz4TM5X"
 EAT_AUTH = HTTPBasicAuth(EAT_KEY, "")
 EAT_BASE_URL = "https://co2.eaternity.ch"
 
 MIG_AUTH = HTTPBasicAuth("hackzurich2020", "uhSyJ08KexKn4ZFS")
 MIG_BASE_URL = "https://hackzurich-api.migros.ch"
+
+# data from [in km]
+# - www.distance.to [car, flight] from capitals
+# - www.searoutes.com [cruise] to La Spezia, IT
+FAR_FROM_ZH = {
+        "FR": [{ "car": 655, "flight": 488 }],
+        "UK": [{ "car": 940, "flight": 776 }],
+        "ES": [{ "car": 1615, "flight": 1246 }],
+        "DE": [{ "car": 837, "flight": 670 }],
+        "BR": [{ "cruise": 10056, "flight": 9620 }],
+        "US": [{ "cruise": 10008, "flight": 6651 }],
+        "CN": [{ "car": 11558, "cruise": 15743, "flight": 9009 }],
+        "CO": [{ "flight": 9078 }],
+        "IN": [{ "car": 7941, "cruise": 8269, "flight": 6155 }],
+        "IT": [{ "car": 856, "flight": 683 }],
+        "TR": [{ "car": 2231, "cruise": 2668, "flight": 1767 }],
+        "ZA": [{ "car": 13864, "cruise": 11010, "flight": 8650 }]}
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -26,6 +45,9 @@ def get_product(product_id):
     else:
         # success
         #return r.json()
+
+    CO2Calculator.calculate_co2_emission(
+    return
 
     # EATERNITY FETCH
     url = f"{EAT_BASE_URL}/api/products/{product_id}"
